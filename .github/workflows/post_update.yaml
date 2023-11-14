@@ -1,0 +1,21 @@
+name: Check for updates in ./posts folder and invoke lambda function
+on: 
+  push:
+    branches: [ master ]
+    paths:
+      - 'posts/**'
+jobs:
+  check_for_updates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Invoke CatchPostUpdate lambda function
+        uses: gagoar/invoke-aws-lambda@master
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGION: eu-west-1
+          FunctionName: CatchPostUpdate
+          Payload: "{\"repo\": \"${{ github.event.repository.url }}\"}"
+

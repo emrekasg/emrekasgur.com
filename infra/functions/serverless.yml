@@ -1,0 +1,17 @@
+service: emrekasgurcom-cdc-post
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  deploymentMethod: direct
+  timeout: 10 
+
+functions:
+  CatchPostUpdate:
+    name: CatchPostUpdate
+    handler: index.handler
+    layers:
+      - arn:aws:lambda:eu-west-1:553035198032:layer:git-lambda2:8
+    environment:
+      DATABASE_URL: example
