@@ -22,7 +22,6 @@ func (app *App) Run() {
 	staticPath := "/"
 	r := mux.NewRouter()
 
-	// CORS
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Access-Control-Allow-Origin", "*")

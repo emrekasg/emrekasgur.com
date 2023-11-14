@@ -1,27 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"github.com/emrekasg/personal-website-api/components"
 )
-
-type Post struct {
-	ID        int        `json:"id"`
-	PostLink  string     `json:"post_link"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-
-	Contents []PostContent `json:"contents"`
-}
-
-func (p *Post) GetTableName() string {
-	return "posts"
-}
-
-func (p *Post) Create() error {
-	return nil
-}
 
 type PostContentResponse struct {
 	ID        int     `json:"id"`
@@ -34,7 +15,7 @@ type PostContentResponse struct {
 	UpdatedAt []uint8 `json:"updated_at"`
 }
 
-func (p *Post) GetPosts(limit, offset int, language string) ([]PostContentResponse, error) {
+func GetPosts(limit, offset int, language string) ([]PostContentResponse, error) {
 	var postResponse []PostContentResponse
 	var postContent []PostContent
 

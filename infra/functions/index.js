@@ -10,9 +10,21 @@ module.exports.handler = async (event) => {
   process.chdir(`/tmp/${repoName}`);
 
   // keep changed files that exists in ./posts folder in a variable
-  const changedFilesCmd = `git diff --name-only HEAD HEAD~1 | grep posts/`;
-  const changedFiles = execSync(changedFilesCmd).toString().split("\n");
-
+  let changedFilesCmd = `git diff --name-only HEAD HEAD~1 | grep posts/`;
+  let changedFiles = [];
+  try {
+      changedFiles = execSync(changedFilesCmd).toString().split("\n");
+  } catch (error) {
+      // If there's an error (like no previous commit), try getting the list of files in the current commit
+      changedFilesCmd = `git ls-tree --name-only -r HEAD | grep posts/`;
+      try {
+          changedFiles = execSync(changedFilesCmd).toString().split("\n");
+      } catch (error) {
+          // Handle any other errors or cases where no files are found
+          console.error("Error while trying to list changed files: ", error);
+      }
+  }
+  
   const posts = [];
 
   // check if there's empty string in the array and remove it
