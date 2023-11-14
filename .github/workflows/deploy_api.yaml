@@ -50,7 +50,7 @@ jobs:
             sudo docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm
             sudo docker images -q | xargs -r docker rmi
             sudo docker pull public.ecr.aws/n6v3i0y3/emrekasgur.com-backend:${{ github.sha }}
-            sudo kill -9 $(sudo lsof -t -i:80)
+            sudo service docker restart
             sudo docker run -d --restart=always --name ${{ github.sha }} -p 80:80 --env-file=.env public.ecr.aws/n6v3i0y3/emrekasgur.com-backend:${{ github.sha }}
           '
         
