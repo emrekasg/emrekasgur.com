@@ -1,9 +1,7 @@
 [PostLink] = example
-[PostTitle] = Example title
-[Brief] = Example brief
+[PostTitle] = AWS Privatelink for MongoDB Atlas PoC
+[Brief] = A PoC demonstrating the use of MongoDB Atlas with AWS PrivateLink
 [Language] = en
-
-## AWS Privatelink for MongoDB Atlas PoC
 
 ### Introduction
 This Proof of Concept (PoC) demonstrates the integration of MongoDB Atlas with AWS PrivateLink. This setup provides a secure, private connection to MongoDB Atlas from an AWS VPC, leveraging AWS PrivateLink technology.
@@ -20,13 +18,7 @@ AWS PrivateLink is recommended over VPC peering in scenarios where:
 * The architecture demands consistent low-latency connectivity.
 * The organization prefers a streamlined network management process with less overhead.
 
-## Architecture
-
-
-![Architectue](./images/image.png)
-
 ## Deployment
-
 
 #### Prerequisites
 
@@ -54,3 +46,7 @@ terraform plan
 ```sh
 terraform apply -auto-approve
 ```
+
+### GitHub Repo:
+
+[Source Code](https://github.com/emrekasg/privatelink-atlas-poc/)
