@@ -2,6 +2,7 @@ package components
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -11,7 +12,9 @@ import (
 var DB = ConnectPlanetscale()
 
 func ConnectPlanetscale() *sql.DB {
-	db, err := sql.Open("mysql", os.Getenv("DSN"))
+	dsn := fmt.Sprintf("%s&parseTime=True", os.Getenv("DSN"))
+
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("failed to connect: %v", err)
 	}

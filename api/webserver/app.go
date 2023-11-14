@@ -17,8 +17,6 @@ func RunApp() {
 }
 
 func (app *App) Run() {
-	fmt.Println("Starting app...")
-
 	staticPath := "/"
 	r := mux.NewRouter()
 
@@ -37,12 +35,11 @@ func (app *App) Run() {
 	r.HandleFunc("/posts", GetPosts).Methods("GET")
 	r.HandleFunc("/healthcheck", HealthCheck).Methods("GET")
 
+	r.HandleFunc("/posts/{postLink}", GetPost).Methods("GET")
+
 	port := fmt.Sprintf(":%d", 80)
 
 	if err := http.ListenAndServe(port, r); err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println("App started on port", port)
-
 }

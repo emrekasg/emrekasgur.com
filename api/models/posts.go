@@ -1,29 +1,28 @@
 package models
 
 import (
+	"time"
+
 	"github.com/emrekasg/personal-website-api/components"
 )
 
-type PostContentResponse struct {
-	ID        int     `json:"id"`
-	Title     string  `json:"title"`
-	Content   string  `json:"content"`
-	Brief     string  `json:"brief"`
-	Language  string  `json:"language"`
-	PostLink  string  `json:"post_link"`
-	CreatedAt []uint8 `json:"created_at"`
-	UpdatedAt []uint8 `json:"updated_at"`
+type PostsResponse struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Brief     string    `json:"brief"`
+	Language  string    `json:"language"`
+	PostLink  string    `json:"post_link"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func GetPosts(limit, offset int, language string) ([]PostContentResponse, error) {
-	var postResponse []PostContentResponse
-	var postContent []PostContent
+func GetPosts(limit, offset int, language string) ([]PostsResponse, error) {
+	var postResponse []PostsResponse
 
 	query := `
 		SELECT
 			pc.id,
 			pc.title,
-			pc.content,
 			pc.brief,
 			pc.lang,
 			p.post_link,
@@ -42,43 +41,80 @@ func GetPosts(limit, offset int, language string) ([]PostContentResponse, error)
 	`
 
 	rows, err := components.DB.Query(query, language, limit, offset)
-
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
 	for rows.Next() {
-		var content PostContent
+		var post PostsResponse
 		err := rows.Scan(
-			&content.ID,
-			&content.Title,
-			&content.Content,
-			&content.Brief,
-			&content.Language,
-			&content.PostLink,
-			&content.CreatedAt,
-			&content.UpdatedAt,
+			&post.ID,
+			&post.Title,
+			&post.Brief,
+			&post.Language,
+			&post.PostLink,
+			&post.CreatedAt,
+			&post.UpdatedAt,
 		)
+
 		if err != nil {
 			return nil, err
 		}
-		postContent = append(postContent, content)
-	}
 
-	for _, content := range postContent {
-		postResponse = append(postResponse, PostContentResponse{
-			ID:        content.ID,
-			Title:     content.Title,
-			Content:   content.Content,
-			Brief:     content.Brief,
-			Language:  content.Language,
-			PostLink:  content.PostLink,
-			CreatedAt: content.CreatedAt,
-			UpdatedAt: content.UpdatedAt,
-		})
+		postResponse = append(postResponse, post)
 	}
 
 	return postResponse, nil
+}
+
+type PostResponse struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Brief     string    `json:"brief"`
+	Content   string    `json:"content"`
+	Language  string    `json:"language"`
+	PostLink  string    `json:"post_link"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func GetPost(postLink, language string) (PostResponse, error) {
+	var post PostResponse
+
+	query := `
+		SELECT
+			pc.id,
+			pc.title,
+			pc.brief,
+			pc.content,
+			pc.lang,
+			p.post_link,
+			pc.created_at,
+			pc.updated_at
+		FROM
+			posts p
+		INNER JOIN
+			post_contents pc ON p.id = pc.post_id
+		WHERE
+			p.post_link = ?
+		AND
+			pc.lang = ?
+	`
+
+	err := components.DB.QueryRow(query, postLink, language).Scan(
+		&post.ID,
+		&post.Title,
+		&post.Brief,
+		&post.Content,
+		&post.Language,
+		&post.PostLink,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
+
+	if err != nil {
+		return post, err
+	}
+
+	return post, nil
 }
