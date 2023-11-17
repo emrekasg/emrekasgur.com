@@ -4,6 +4,10 @@ on:
     branches: [ master ]
     paths:
       - 'posts/**'
+  workflow_run:
+    workflows: ["Deploy serverless functions to AWS Lambda"]
+    types:
+      - completed
 jobs:
   check_for_updates:
     runs-on: ubuntu-latest

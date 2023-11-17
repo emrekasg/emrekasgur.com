@@ -2,6 +2,8 @@
 [PostTitle] = AWS Privatelink ile MongoDB Atlas kullanımı PoC
 [Brief] = MongoDB Atlas ile AWS PrivateLink'in nasıl kullanıldığını gösteren bir PoC
 [Language] = tr
+[Tag] = poc
+[Visible] = true
 
 ### Giriş
 Bu Proof of Concept (PoC), MongoDB Atlas ile AWS PrivateLink entegrasyonunu göstermektedir. Bu kurulum, AWS PrivateLink teknolojisini kullanarak, bir AWS VPC'den MongoDB Atlas'a güvenli ve özel bir bağlantı sağlar.

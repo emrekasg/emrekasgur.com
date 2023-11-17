@@ -7,78 +7,86 @@ const connection = mysql.createConnection(db);
 
 module.exports.insertOrUpdatePost = async function (post) {
     connection.connect();
-    const checkPostLinkQuery = 'SELECT id FROM posts WHERE post_link = ?';
-    const [postRow] = await connection.promise().query(checkPostLinkQuery, [post.post_link]);
+    await connection.beginTransaction();
 
-    let postId;
+    try {
+        const checkPostLinkQuery = 'SELECT id FROM posts WHERE post_link = ?';
+        const [postRow] = await connection.promise().query(checkPostLinkQuery, [post.post_link]);
 
-    if (postRow.length === 0) {
-        const insertPostQuery = 'INSERT INTO posts (post_link) VALUES (?)';
-        const [rows] = await connection.promise().query(insertPostQuery, [post.post_link]);
-        postId = rows.insertId;
-    } else {
-        postId = postRow[0].id;
-    }
+        let postId;
 
-    const checkLanguageQuery = 'SELECT id FROM post_contents WHERE post_id = ? AND lang = ?';
-    const [languageRow] = await connection.promise().query(checkLanguageQuery, [postId, post.language]);
+        if (postRow.length === 0) {
+            const insertPostQuery = 'INSERT INTO posts (post_link, tag, visible) VALUES (?, ?)';
+            const [rows] = await connection.promise().query(insertPostQuery, [post.post_link, post.tag, post.visible]);
+            postId = rows.insertId;
+        } else {
+            postId = postRow[0].id;
+            const updatePostQuery = 'UPDATE posts SET tag = ?, visible = ? WHERE id = ?';
+            await connection.promise().query(updatePostQuery, [post.tag, post.visible, postId]);
+        }
 
-    if (languageRow.length === 0) {
-        const insertPostContentQuery = 'INSERT INTO post_contents (post_id, lang, content, brief, title) VALUES (?, ?, ?, ?, ?)';
-        await connection.promise().query(insertPostContentQuery, [postId, post.language, post.content, post.brief, post.title]);
-    } else {
-        const updatePostContentQuery = 'UPDATE post_contents SET content = ?, brief = ?, title = ? WHERE id = ?';
-        await connection.promise().query(updatePostContentQuery, [post.content, post.brief, post.title, languageRow[0].id]);
+        const checkLanguageQuery = 'SELECT id FROM post_contents WHERE post_id = ? AND lang = ?';
+        const [languageRow] = await connection.promise().query(checkLanguageQuery, [postId, post.language]);
+
+        if (languageRow.length === 0) {
+            const insertPostContentQuery = 'INSERT INTO post_contents (post_id, lang, content, brief, title) VALUES (?, ?, ?, ?, ?)';
+            await connection.promise().query(insertPostContentQuery, [postId, post.language, post.content, post.brief, post.title]);
+        } else {
+            const updatePostContentQuery = 'UPDATE post_contents SET content = ?, brief = ?, title = ? WHERE id = ?';
+            await connection.promise().query(updatePostContentQuery, [post.content, post.brief, post.title, languageRow[0].id]);
+        }
+
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        throw error;
     }
 }
 
-
 /*
-  content always starts like:
-    [PostLink] = "setupping-envoy-sidecar-on-fargate-pods-in-realtime"
-    [PostTitle] = "Setupping envoy sidecar, and gathering metrics on Fargates/pods in real-time without App Mesh"
-    [Brief] = "In this article we will setup envoy sidecar on Fargate pods, and gather metrics in real-time without App Mesh"
-    [Language] = "en"
-    
-  I need to parse these values and keep them in variables
+    content always starts like:
+        [PostLink] = "{{ post_link }}"
+        [PostTitle] = "{{ title }}"
+        [Brief] = "{{ brief }}"
+        [Language] = "{{ language_code }}"
+        [Tag] = "{{ tag }}"
+        [Visible] = true/false
+        
+    We need to parse those values and keep them in variables
 */
 module.exports.processPost = function (file) {
     const content = fs.readFileSync(path.join(process.cwd(), file), "utf8");
-
-    // split the content by new line
     const lines = content.split("\n");
 
-    let postLink, postTitle, brief, language, body;
-    
-    // iterate first 5 lines
-    lines.forEach((line, index) => {
-        const [name, value] = line.split(" = ");
-        switch (name) {
-            case "[PostLink]":
-                postLink = value;
-                break;
-            case "[PostTitle]":
-                postTitle = value;
-                break;
-            case "[Brief]":
-                brief = value;
-                break;
-            case "[Language]":
-                language = value;
-                break;
-            default:
-                break;
+    const postMap = {
+        "[PostLink]": "post_link",
+        "[PostTitle]": "title",
+        "[Brief]": "brief",
+        "[Language]": "language",
+        "[Tag]": "tag",
+        "[Visible]": "visible",
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const [key, value] = line.split(" = ");
+
+        // if the line is not in the postMap, skip it
+        if (!postMap[key]) {
+            continue;
         }
-    });
+
+        if (key === "[Visible]") {
+            postMap[postMap[key]] = value === "true";
+            continue;
+        }
+
+        postMap[postMap[key]] = value.replace(/"/g, "");
+    }
 
     // keep the rest of the content as the body
-    body = lines.slice(5).join("\n");
+    const body = lines.slice(6).join("\n");
+    postMap["content"] = body;
 
-    return {
-        post_link: postLink,
-        title: postTitle,
-        brief,
-        language,
-        content: body
-    };
+    return postMap;
 }

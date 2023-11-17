@@ -2,6 +2,8 @@
 [PostTitle] = AWS Privatelink for MongoDB Atlas PoC
 [Brief] = A PoC demonstrating the use of MongoDB Atlas with AWS PrivateLink
 [Language] = en
+[Tag] = poc
+[Visible] = true
 
 ### Introduction
 This Proof of Concept (PoC) demonstrates the integration of MongoDB Atlas with AWS PrivateLink. This setup provides a secure, private connection to MongoDB Atlas from an AWS VPC, leveraging AWS PrivateLink technology.

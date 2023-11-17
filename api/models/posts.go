@@ -16,8 +16,15 @@ type PostsResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func GetPosts(limit, offset int, language string) ([]PostsResponse, error) {
+func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) {
 	var postResponse []PostsResponse
+
+	tagWhere := ""
+	args := []interface{}{language}
+	if tag != "" {
+		tagWhere = "AND p.tag = ?"
+		args = append(args, tag)
+	}
 
 	query := `
 		SELECT
@@ -33,14 +40,15 @@ func GetPosts(limit, offset int, language string) ([]PostsResponse, error) {
 		INNER JOIN
 			post_contents pc ON p.id = pc.post_id
 		WHERE
-			pc.lang = ?
+			pc.lang = ? ` + tagWhere + `
 		ORDER BY
 			pc.created_at DESC
 		LIMIT ?
 		OFFSET ?
 	`
 
-	rows, err := components.DB.Query(query, language, limit, offset)
+	args = append(args, limit, offset)
+	rows, err := components.DB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +82,7 @@ type PostResponse struct {
 	Content   string    `json:"content"`
 	Language  string    `json:"language"`
 	PostLink  string    `json:"post_link"`
+	Tag       string    `json:"tag"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -89,6 +98,7 @@ func GetPost(postLink, language string) (PostResponse, error) {
 			pc.content,
 			pc.lang,
 			p.post_link,
+			p.tag,
 			pc.created_at,
 			pc.updated_at
 		FROM
@@ -108,6 +118,7 @@ func GetPost(postLink, language string) (PostResponse, error) {
 		&post.Content,
 		&post.Language,
 		&post.PostLink,
+		&post.Tag,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)

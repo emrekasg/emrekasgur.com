@@ -21,7 +21,9 @@ func GetPosts(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	posts, err := models.GetPosts(limit, offset, language)
+	tag := req.URL.Query().Get("tag")
+
+	posts, err := models.GetPosts(limit, offset, language, tag)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			WriteResp(res, http.StatusNotFound, "No posts found", nil)

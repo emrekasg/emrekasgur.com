@@ -32,10 +32,12 @@ func (app *App) Run() {
 		fmt.Fprintf(w, "Hello World!")
 	}).Methods("GET")
 
-	r.HandleFunc("/posts", GetPosts).Methods("GET")
 	r.HandleFunc("/healthcheck", HealthCheck).Methods("GET")
 
+	r.HandleFunc("/posts", GetPosts).Methods("GET")
 	r.HandleFunc("/posts/{postLink}", GetPost).Methods("GET")
+
+	r.HandleFunc("/tags", GetTags).Methods("GET")
 
 	port := fmt.Sprintf(":%d", 80)
 
