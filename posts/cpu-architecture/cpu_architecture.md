@@ -3,7 +3,7 @@
 [Brief] = In this post, I will try to explain the CPU architecture in a simple way.
 [Language] = en
 [Tag] = computer-science
-[Visible] = true
+[Visible] = false
 
 Note: The main reason of writing a blog for me, is to write down what I’ve learned so far while trying to understand a topic. 
 

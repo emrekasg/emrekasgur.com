@@ -21,5 +21,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           REGION: eu-west-1
           FunctionName: CatchPostUpdate
-          Payload: "{\"repo\": \"${{ github.event.repository.url }}\"}"
+          Payload: "{\"repo\": \"${{ github.repositoryUrl }}\"}"
 

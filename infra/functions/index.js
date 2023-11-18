@@ -2,9 +2,11 @@ const { execSync } = require('child_process');
 const { processPost, insertOrUpdatePost } = require('./post');
 
 module.exports.handler = async (event) => {
-  const repo = event.repo;
+  let repo = event.repo;
   const repoName = Math.random().toString(14).substring(7);
 
+  repo = repo.replace("git://", "https://");
+  
   execSync(`git clone ${repo} /tmp/${repoName}`);
   process.chdir(`/tmp/${repoName}`);
 

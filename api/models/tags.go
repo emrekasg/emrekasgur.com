@@ -18,6 +18,8 @@ func GetTags() (Tags, error) {
 			COUNT(1) AS post_count
 		FROM
 			posts p		
+		WHERE 
+			p.visible = 1
 		GROUP BY
 			p.tag
 		ORDER BY

@@ -10,6 +10,7 @@ type PostsResponse struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	Brief     string    `json:"brief"`
+	Tag       string    `json:"tag"`
 	Language  string    `json:"language"`
 	PostLink  string    `json:"post_link"`
 	CreatedAt time.Time `json:"created_at"`
@@ -33,6 +34,7 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 			pc.brief,
 			pc.lang,
 			p.post_link,
+			p.tag,
 			pc.created_at,
 			pc.updated_at
 		FROM
@@ -40,7 +42,7 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 		INNER JOIN
 			post_contents pc ON p.id = pc.post_id
 		WHERE
-			pc.lang = ? ` + tagWhere + `
+			pc.lang = ? AND visible = 1 ` + tagWhere + `
 		ORDER BY
 			pc.created_at DESC
 		LIMIT ?
@@ -61,6 +63,7 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 			&post.Brief,
 			&post.Language,
 			&post.PostLink,
+			&post.Tag,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
