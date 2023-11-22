@@ -1,5 +1,5 @@
 [PostLink] = pinning-goroutines-into-specific-cores
-[PostTitle] =  Pinning goroutines into specific cores
+[PostTitle] = Pinning goroutines into specific cores
 [Brief] = An experimental package for pinning goroutines to specific CPU cores
 [Language] = en
 [Tag] = go
