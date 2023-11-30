@@ -39,6 +39,8 @@ func (app *App) Run() {
 
 	r.HandleFunc("/tags", GetTags).Methods("GET")
 
+	r.HandleFunc("/sad_video", RandomSadVideo).Methods("GET")
+
 	port := fmt.Sprintf(":%d", 80)
 
 	if err := http.ListenAndServe(port, r); err != nil {
