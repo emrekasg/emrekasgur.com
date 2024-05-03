@@ -29,6 +29,7 @@ func GetPosts(res http.ResponseWriter, req *http.Request) {
 			WriteResp(res, http.StatusNotFound, "No posts found", nil)
 			return
 		}
+		fmt.Println(err)
 		WriteResp(res, http.StatusInternalServerError, "Error while getting posts", nil)
 		return
 	}

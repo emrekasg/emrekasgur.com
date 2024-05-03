@@ -23,8 +23,11 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 	tagWhere := ""
 	args := []interface{}{language}
 	if tag != "" {
-		tagWhere = "AND p.tag = ?"
+		tagWhere = "AND p.tag = $2"
 		args = append(args, tag)
+	} else {
+		tagWhere = "AND 1=$2"
+		args = append(args, 1)
 	}
 
 	query := `
@@ -42,13 +45,14 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 		INNER JOIN
 			post_contents pc ON p.id = pc.post_id
 		WHERE
-			pc.lang = ? AND visible = 1 ` + tagWhere + `
+			pc.lang = $1 AND p.visible = true ` + tagWhere + `
 		ORDER BY
 			pc.created_at DESC
-		LIMIT ?
-		OFFSET ?
+		LIMIT $3
+		OFFSET $4
 	`
 
+	print(query)
 	args = append(args, limit, offset)
 	rows, err := components.DB.Query(query, args...)
 	if err != nil {
@@ -109,9 +113,9 @@ func GetPost(postLink, language string) (PostResponse, error) {
 		INNER JOIN
 			post_contents pc ON p.id = pc.post_id
 		WHERE
-			p.post_link = ?
+			p.post_link = $1
 		AND
-			pc.lang = ?
+			pc.lang = $2
 	`
 
 	err := components.DB.QueryRow(query, postLink, language).Scan(

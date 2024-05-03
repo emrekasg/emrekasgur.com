@@ -19,7 +19,7 @@ func GetTags() (Tags, error) {
 		FROM
 			posts p		
 		WHERE 
-			p.visible = 1
+			p.visible = true
 		GROUP BY
 			p.tag
 		ORDER BY
