@@ -1,6 +1,9 @@
 package models
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/emrekasg/personal-website-api/components"
@@ -17,20 +20,8 @@ type PostsResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) {
-	var postResponse []PostsResponse
-
-	tagWhere := ""
-	args := []interface{}{language}
-	if tag != "" {
-		tagWhere = "AND p.tag = $2"
-		args = append(args, tag)
-	} else {
-		tagWhere = "AND 1=$2"
-		args = append(args, 1)
-	}
-
-	query := `
+const (
+	selectPostsQuery = `
 		SELECT
 			pc.id,
 			pc.title,
@@ -45,59 +36,10 @@ func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) 
 		INNER JOIN
 			post_contents pc ON p.id = pc.post_id
 		WHERE
-			pc.lang = $1 AND p.visible = true ` + tagWhere + `
-		ORDER BY
-			pc.created_at DESC
-		LIMIT $3
-		OFFSET $4
+			pc.lang = $1 AND p.visible = true
 	`
 
-	print(query)
-	args = append(args, limit, offset)
-	rows, err := components.DB.Query(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var post PostsResponse
-		err := rows.Scan(
-			&post.ID,
-			&post.Title,
-			&post.Brief,
-			&post.Language,
-			&post.PostLink,
-			&post.Tag,
-			&post.CreatedAt,
-			&post.UpdatedAt,
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
-		postResponse = append(postResponse, post)
-	}
-
-	return postResponse, nil
-}
-
-type PostResponse struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	Brief     string    `json:"brief"`
-	Content   string    `json:"content"`
-	Language  string    `json:"language"`
-	PostLink  string    `json:"post_link"`
-	Tag       string    `json:"tag"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-func GetPost(postLink, language string) (PostResponse, error) {
-	var post PostResponse
-
-	query := `
+	selectPostQuery = `
 		SELECT
 			pc.id,
 			pc.title,
@@ -117,8 +59,77 @@ func GetPost(postLink, language string) (PostResponse, error) {
 		AND
 			pc.lang = $2
 	`
+)
 
-	err := components.DB.QueryRow(query, postLink, language).Scan(
+// GetPosts retrieves a paginated list of posts with optional tag filtering
+func GetPosts(limit, offset int, language, tag string) ([]PostsResponse, error) {
+	var postResponse []PostsResponse
+
+	tagWhere := "AND 1=$2"
+	args := []interface{}{language, 1}
+	if tag != "" {
+		tagWhere = "AND p.tag = $2"
+		args = []interface{}{language, tag}
+	}
+
+	query := selectPostsQuery + tagWhere + `
+		ORDER BY
+			pc.created_at DESC
+		LIMIT $3
+		OFFSET $4
+	`
+
+	args = append(args, limit, offset)
+
+	ctx := context.Background()
+	rows, err := components.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query posts: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post PostsResponse
+		if err := rows.Scan(
+			&post.ID,
+			&post.Title,
+			&post.Brief,
+			&post.Language,
+			&post.PostLink,
+			&post.Tag,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan post row: %w", err)
+		}
+		postResponse = append(postResponse, post)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return postResponse, nil
+}
+
+type PostResponse struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Brief     string    `json:"brief"`
+	Content   string    `json:"content"`
+	Language  string    `json:"language"`
+	PostLink  string    `json:"post_link"`
+	Tag       string    `json:"tag"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// GetPost retrieves a single post by its link and language
+func GetPost(postLink, language string) (PostResponse, error) {
+	var post PostResponse
+
+	ctx := context.Background()
+	err := components.DB.QueryRowContext(ctx, selectPostQuery, postLink, language).Scan(
 		&post.ID,
 		&post.Title,
 		&post.Brief,
@@ -131,7 +142,10 @@ func GetPost(postLink, language string) (PostResponse, error) {
 	)
 
 	if err != nil {
-		return post, err
+		if err == sql.ErrNoRows {
+			return post, fmt.Errorf("post not found: %w", err)
+		}
+		return post, fmt.Errorf("failed to query post: %w", err)
 	}
 
 	return post, nil

@@ -1,7 +1,7 @@
 package webserver
 
 import (
-	"fmt"
+	"database/sql"
 	"net/http"
 
 	"github.com/emrekasg/personal-website-api/models"
@@ -10,12 +10,12 @@ import (
 func GetTags(res http.ResponseWriter, req *http.Request) {
 	tags, err := models.GetTags()
 	if err != nil {
-		fmt.Println(err)
-		if err.Error() == "sql: no rows in result set" {
+		switch {
+		case err == sql.ErrNoRows:
 			WriteResp(res, http.StatusNotFound, "No tags found", nil)
-			return
+		default:
+			WriteResp(res, http.StatusInternalServerError, "Failed to fetch tags", nil)
 		}
-		WriteResp(res, http.StatusInternalServerError, "Error while getting tags", nil)
 		return
 	}
 

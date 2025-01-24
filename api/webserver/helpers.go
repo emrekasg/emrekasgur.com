@@ -7,7 +7,10 @@ import (
 	"strconv"
 )
 
-var allowedLanguages = []string{"en", "tr"}
+var allowedLanguages = map[string]bool{
+	"en": true,
+	"tr": true,
+}
 
 type (
 	Response struct {
@@ -54,18 +57,17 @@ func GetLimitAndOffset(req *http.Request) (int, int, error) {
 }
 
 func CheckLanguage(language string) bool {
-	for _, lang := range allowedLanguages {
-		if lang == language {
-			return true
-		}
+	if language == "" {
+		return false
 	}
-	return false
+	_, ok := allowedLanguages[language]
+	return ok
 }
 
 func getAllowedLanguages() string {
 	var langs string
-	for _, lang := range allowedLanguages {
+	for lang := range allowedLanguages {
 		langs += lang + ", "
 	}
-	return langs
+	return langs[:len(langs)-2]
 }

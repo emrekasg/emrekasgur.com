@@ -22,7 +22,14 @@ func (app *App) Run() {
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Origin", "https://emrekasgur.com")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 
 			next.ServeHTTP(w, r)
 		})
@@ -36,10 +43,7 @@ func (app *App) Run() {
 
 	r.HandleFunc("/posts", GetPosts).Methods("GET")
 	r.HandleFunc("/posts/{postLink}", GetPost).Methods("GET")
-
 	r.HandleFunc("/tags", GetTags).Methods("GET")
-
-	r.HandleFunc("/sad_video", RandomSadVideo).Methods("GET")
 
 	port := fmt.Sprintf(":%d", 80)
 
